@@ -22,7 +22,13 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="convertVibes.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="dataloading.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="loadVibes.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Utils.py" />
