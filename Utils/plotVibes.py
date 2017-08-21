@@ -2,6 +2,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy
+from scipy import optimize
 
 '''
 0 time(min)
@@ -32,6 +33,7 @@ def processNPY(file):
 #    number of samples, data point, signal
     means = np.mean(vals,0)
     stds = np.std(vals,0,ddof=1)
+    
 
     return file.replace(".npy",""), means,stds
     
@@ -46,11 +48,21 @@ def plotVibes(dicts,channel):
         freq = means[:,6]
         storage_means = means[:,channel]
         storage_stds = stds[:,channel]
+
+        curve = scipy.optimize.curve_fit(lambda w,E,n: E*w**n,freq,storage_means)
+        E = curve[0][0]
+        n = curve[0][1]
+        x = np.logspace(0,2,50)
+        y = E*x**n
+        
         #plt.loglog(freq,storage_means,'kx')
         #print freq
         #print storage_means
-        print key
-        plt.errorbar(freq, storage_means, yerr=storage_stds, fmt="s-",label = key)
+        print key,curve
+        p = plt.errorbar(freq, storage_means, yerr=storage_stds, fmt="s",label = key)
+        mark = p[0].get_color()
+        plt.loglog(x,y,mark+'-')
+        
 
     
     ax.grid(True, which='both',ls='--')
