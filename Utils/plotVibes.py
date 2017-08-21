@@ -40,13 +40,9 @@ def processNPY(file):
     
 
     return file.replace(".npy",""), means,stds
-    
-def plotVibes(dicts,channel):
-    ax = plt.subplot(111)
-    ax.set_xscale("log", nonposx='clip')
-    ax.set_yscale("log", nonposy='clip')
 
-
+def fitPowerLaw(dicts,channel):
+    powerlaws = {}
     for key in dicts.keys():
         (means,stds )= dicts[key]
         freq = means[:,6]
@@ -64,29 +60,37 @@ def plotVibes(dicts,channel):
 
         pfinal = out[0]
         covar = out[1]
-        print pfinal
-        print covar
+        #print key
+        #print pfinal
+        #print covar
 
         index = pfinal[1]
         amp = 10.0**pfinal[0]
 
         indexErr = np.sqrt( covar[1][1] )
         ampErr = np.sqrt( covar[0][0] ) * amp
+        powerlaws[key]=(index,amp,indexErr,ampErr)
+    return powerlaws
 
-        #curve = scipy.optimize.curve_fit(lambda w,E,n: E*w**n,freq,storage_means)
-        #E = curve[0][0]
-        #n = curve[0][1]
-        #x = np.logspace(0,2,50)
-        #y = E*x**n
-        
-        #plt.loglog(freq,storage_means,'kx')
-        #print freq
-        #print storage_means
+def plotVibes(dicts,channel,fits=None):
+    ax = plt.subplot(111)
+    ax.set_xscale("log", nonposx='clip')
+    ax.set_yscale("log", nonposy='clip')
+
+
+    for key in dicts.keys():
+        (means,stds )= dicts[key]
+        freq = means[:,6]
+        storage_means = means[:,channel]
+        storage_stds = stds[:,channel]
         print key
         p = plt.errorbar(freq, storage_means, yerr=storage_stds, fmt="s",label = key)
         mark = p[0].get_color()
-        plt.plot(freq,powerlaw(freq,amp,index),mark+'-')
-        #plt.loglog(x,y,mark+'-')
+        if fits:
+            if key in fits.keys():
+                index,amp,ierr,aerr = fits[key]
+                plt.plot(freq,powerlaw(freq,amp,index),mark+'-')
+                #plt.loglog(x,y,mark+'-')
         
 
     
@@ -104,9 +108,10 @@ def plotVibes(dicts,channel):
 
 if __name__ == "__main__":
     npfiles = [f for f in os.listdir('.') if '.np' and "I-" in f]
-    toplots={}
+    data={}
     for npfile in npfiles:
         (name, means, stds) = processNPY(npfile)
-        toplots[name] = (means,stds)
-    plotVibes(toplots,2)
+        data[name] = (means,stds)
+    fits = fitPowerLaw(data,2)
+    plotVibes(data,2,fits)
     
