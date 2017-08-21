@@ -26,6 +26,10 @@ from scipy import optimize
 Channels = ["time", "temp", "Storage Modulus",  "Loss Modulus", "Stress",   "Tan Delta",    "Freq", "Drive Force",  "Amplitude","Strain",   "Dispalcement", "Static Force", "Position","Length","Force","Stiffness","Pressure"]
 Units =    ["min",  "C",    "MPa",              "MPa",          "MPa",      "",             "Hz",   "N",            "um",       "%",        "um",           "N",            "mm",       "mm",   "N",    "N/m",      "kPa"]
 
+powerlaw = lambda x, amp, index: amp * (x**index)
+fitfunc = lambda p, x: p[0] + p[1] * x
+errfunc = lambda p, x, y, err: (y - fitfunc(p, x)) / err
+
 def processNPY(file):
     vals = np.load(file)
     shape = vals.shape
@@ -49,19 +53,40 @@ def plotVibes(dicts,channel):
         storage_means = means[:,channel]
         storage_stds = stds[:,channel]
 
-        curve = scipy.optimize.curve_fit(lambda w,E,n: E*w**n,freq,storage_means)
-        E = curve[0][0]
-        n = curve[0][1]
-        x = np.logspace(0,2,50)
-        y = E*x**n
+        logx = np.log10(freq)
+        logy = np.log10(storage_means)
+        logyerr = storage_stds/storage_means
+
+
+        pinit = [1.0, -1.0]
+        out = optimize.leastsq(errfunc, pinit,
+                               args=(logx, logy, logyerr), full_output=1)
+
+        pfinal = out[0]
+        covar = out[1]
+        print pfinal
+        print covar
+
+        index = pfinal[1]
+        amp = 10.0**pfinal[0]
+
+        indexErr = np.sqrt( covar[1][1] )
+        ampErr = np.sqrt( covar[0][0] ) * amp
+
+        #curve = scipy.optimize.curve_fit(lambda w,E,n: E*w**n,freq,storage_means)
+        #E = curve[0][0]
+        #n = curve[0][1]
+        #x = np.logspace(0,2,50)
+        #y = E*x**n
         
         #plt.loglog(freq,storage_means,'kx')
         #print freq
         #print storage_means
-        print key,curve
+        print key
         p = plt.errorbar(freq, storage_means, yerr=storage_stds, fmt="s",label = key)
         mark = p[0].get_color()
-        plt.loglog(x,y,mark+'-')
+        plt.plot(freq,powerlaw(freq,amp,index),mark+'-')
+        #plt.loglog(x,y,mark+'-')
         
 
     
