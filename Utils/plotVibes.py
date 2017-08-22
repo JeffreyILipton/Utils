@@ -42,7 +42,7 @@ def processNPY(file):
     return file.replace(".npy",""), means,stds
 
 def atOneHz(dicts):
-    dicts.keys()
+    # Extract percents from names
     percents = []
     properties = {}
     for key in dicts.keys():
@@ -51,23 +51,35 @@ def atOneHz(dicts):
         if sval != 'bl': val = float(sval)
         print val
         percents.append(val)
+        properties[val]=key
+    percents.sort()
+
+    
+    at1hz = np.zeros( (len(percents),7) )
+    for i in range(0,len(percents)):
+        val = percents[i]
+        key = properties[val]
         (means,stds )= dicts[key]
         eprime = means[0,2]
         edprime = means[0,3]
         tandelta = means[0,5]
-        print val,eprime,edprime,tandelta
-        properties[val] = (eprime,edprime,tandelta)
-    percents.sort()
-    at1hz = np.zeros( (len(percents),4) )
-    for i in range(0,len(percents)):
-        val = percents[i]
-        eprime,edprime,tandelta = properties[val]
-        at1hz[i,:] = [val,eprime,edprime,tandelta]
-    print at1hz
-    plt.plot(at1hz[:,0],at1hz[:,1],"o")
-    plt.show()
+        at1hz[i,:] = [val,eprime,edprime,tandelta,stds[0,2],stds[0,3],stds[0,5]]
+
     return at1hz
-    
+
+def plotAt1Hz(at1hz):
+    ax = plt.subplot(111)
+    #ax.set_xscale("log", nonposx='clip')
+    #ax.set_yscale("log", nonposy='clip')
+    plt.errorbar(at1hz[:,0],at1hz[:,1],yerr=at1hz[:,4], fmt="o-",label = "E'")
+    plt.errorbar(at1hz[:,0],at1hz[:,2],yerr=at1hz[:,5], fmt="s-",label = "E''")
+    #plt.errorbar(at1hz[:,0],at1hz[:,3],yerr=at1hz[:,6], fmt="x-",label = "Tan(Delta)")
+    plt.legend(loc=0, borderaxespad=0.5)
+    ax.set_xlim(-1,35)
+    ax.set_ylabel("(MPa)")
+    ax.set_xlabel("Percent Liquid")
+    ax.set_title("At 1 Hz")
+    plt.show()    
 
 def fitPowerLaw(dicts,channel):
     powerlaws = {}
@@ -143,7 +155,8 @@ if __name__ == "__main__":
     for npfile in npfiles:
         (name, means, stds) = processNPY(npfile)
         data[name] = (means,stds)
-    atOneHz(data)
+    at1hz = atOneHz(data)
+    plotAt1Hz(at1hz)
     #EPrimefits = fitPowerLaw(data,2)
     #plotVibes(data,2,EPrimefits)
     #EdPrimefits = fitPowerLaw(data,3)
