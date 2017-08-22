@@ -67,6 +67,63 @@ def atOneHz(dicts):
 
     return at1hz
 
+def fitsToArray(ep,edp,tand):
+    percents = []
+    properties = {}
+    for key in ep.keys():
+        sval = key.split('-')[1].replace('%','')
+        val = 0
+        if sval != 'bl': val = float(sval)
+        print val
+        percents.append(val)
+        properties[val]=key
+    percents.sort()
+    
+    dicts = [ep,edp,tand]
+
+    models = np.zeros( (len(percents),13) )
+    for i in range(0,len(percents)):
+        val = percents[i]
+        key = properties[val]
+        x = [val]
+        for a in range(0,3):
+            x = x+list(dicts[a][key])
+        models[i,:] = x 
+
+    return models
+
+def plotFits(models):
+    # row and column sharing
+    # E'/E''/TanDelta @ 1hz     |     N
+
+    # val,index,amp,ierr,aerr,index,amp,ierr,aerr,index,amp,ierr,aerr
+    # 0     1   2   3    4      5   6   7    8    9     10  11  12
+    f, axarr = plt.subplots(3, 2, sharex='col')
+    # E'
+    axarr[0,0].errorbar(models[:,0],models[:,2],yerr=models[:,4], fmt="o")
+    axarr[0,0].set_title("'E'")
+    axarr[0,0].set_ylabel('(MPa)')
+    # n of E'
+    axarr[0,1].errorbar(models[:,0],models[:,1],yerr=models[:,3], fmt="o")
+    axarr[0,1].set_title("n of E'")
+    
+    # E''
+    axarr[1,0].errorbar(models[:,0],models[:,6],yerr=models[:,8], fmt="o")
+    axarr[1,0].set_title("E''")
+    axarr[1,0].set_ylabel('(MPa)')
+    # n of E''
+    axarr[1,1].errorbar(models[:,0],models[:,5],yerr=models[:,7], fmt="o")
+    axarr[1,1].set_title("n of E''")
+    # tandelta'
+    axarr[2,0].errorbar(models[:,0],models[:,10],yerr=models[:,12], fmt="o")
+    axarr[2,0].set_title("Tan Delta")
+    axarr[2,0].set_xlabel("Percentage Liquid")
+    # n of tandelta'
+    axarr[2,1].errorbar(models[:,0],models[:,9],yerr=models[:,11], fmt="o")
+    axarr[2,1].set_title("n of Tan Delta")
+    axarr[2,1].set_xlabel("Percentage Liquid")
+    plt.show()
+
 def plotAt1Hz(at1hz):
     ax = plt.subplot(111)
     #ax.set_xscale("log", nonposx='clip')
@@ -112,6 +169,9 @@ def fitPowerLaw(dicts,channel):
         powerlaws[key]=(index,amp,indexErr,ampErr)
     return powerlaws
 
+
+
+
 def plotVibes(dicts,channel,fits=None):
     ax = plt.subplot(111)
     ax.set_xscale("log", nonposx='clip')
@@ -156,10 +216,13 @@ if __name__ == "__main__":
         (name, means, stds) = processNPY(npfile)
         data[name] = (means,stds)
     at1hz = atOneHz(data)
-    plotAt1Hz(at1hz)
-    #EPrimefits = fitPowerLaw(data,2)
+    #plotAt1Hz(at1hz)
+    EPrimefits = fitPowerLaw(data,2)
     #plotVibes(data,2,EPrimefits)
-    #EdPrimefits = fitPowerLaw(data,3)
+    EdPrimefits = fitPowerLaw(data,3)
     #plotVibes(data,3,EdPrimefits)    
-    #TanDeltafits = fitPowerLaw(data,5)
-    #plotVibes(data,5,TanDeltafits)    
+    TanDeltafits = fitPowerLaw(data,5)
+    #plotVibes(data,5,TanDeltafits)
+    models = fitsToArray(EPrimefits,EdPrimefits,TanDeltafits)
+    plotFits(models)    
+        

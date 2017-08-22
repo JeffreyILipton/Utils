@@ -12,6 +12,7 @@
     <OutputPath>.</OutputPath>
     <Name>Utils</Name>
     <RootNamespace>Utils</RootNamespace>
+    <InterpreterId>Global|ContinuumAnalytics|Anaconda27-64</InterpreterId>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -33,6 +34,9 @@
     </Compile>
     <Compile Include="plotVibes.py" />
     <Compile Include="Utils.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <InterpreterReference Include="Global|ContinuumAnalytics|Anaconda27-64" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
