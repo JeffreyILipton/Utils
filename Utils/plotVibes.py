@@ -41,6 +41,34 @@ def processNPY(file):
 
     return file.replace(".npy",""), means,stds
 
+def atOneHz(dicts):
+    dicts.keys()
+    percents = []
+    properties = {}
+    for key in dicts.keys():
+        sval = key.split('-')[1].replace('%','')
+        val = 0
+        if sval != 'bl': val = float(sval)
+        print val
+        percents.append(val)
+        (means,stds )= dicts[key]
+        eprime = means[0,2]
+        edprime = means[0,3]
+        tandelta = means[0,5]
+        print val,eprime,edprime,tandelta
+        properties[val] = (eprime,edprime,tandelta)
+    percents.sort()
+    at1hz = np.zeros( (len(percents),4) )
+    for i in range(0,len(percents)):
+        val = percents[i]
+        eprime,edprime,tandelta = properties[val]
+        at1hz[i,:] = [val,eprime,edprime,tandelta]
+    print at1hz
+    plt.plot(at1hz[:,0],at1hz[:,1],"o")
+    plt.show()
+    return at1hz
+    
+
 def fitPowerLaw(dicts,channel):
     powerlaws = {}
     for key in dicts.keys():
@@ -100,7 +128,10 @@ def plotVibes(dicts,channel,fits=None):
     plt.legend(loc=2, borderaxespad=0.5)
     ax.set_xlim(0.9,110)
     ax.set_xlabel('Frequency (Hz)')
-    ax.set_ylabel(Channels[channel]+" ("+Units[channel]+")")
+    if Units[channel]:
+       ax.set_ylabel(Channels[channel]+" ("+Units[channel]+")")
+    else:
+       ax.set_ylabel(Channels[channel]) 
     #ax.set_title(Channels[channel])
 
     plt.show()
@@ -112,6 +143,10 @@ if __name__ == "__main__":
     for npfile in npfiles:
         (name, means, stds) = processNPY(npfile)
         data[name] = (means,stds)
-    fits = fitPowerLaw(data,2)
-    plotVibes(data,2,fits)
-    
+    atOneHz(data)
+    #EPrimefits = fitPowerLaw(data,2)
+    #plotVibes(data,2,EPrimefits)
+    #EdPrimefits = fitPowerLaw(data,3)
+    #plotVibes(data,3,EdPrimefits)    
+    #TanDeltafits = fitPowerLaw(data,5)
+    #plotVibes(data,5,TanDeltafits)    
